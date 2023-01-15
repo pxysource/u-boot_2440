@@ -30,6 +30,7 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
+#if 0
 #define FCLK_SPEED 1
 
 #if FCLK_SPEED==0		/* Fout = 203MHz, Fin = 12MHz for Audio */
@@ -54,6 +55,21 @@ DECLARE_GLOBAL_DATA_PTR;
 #define U_M_SDIV	0x2
 #endif
 
+#endif
+
+/**
+ * Refer to 7-21 of the "S3C2440A 32-BIT CMOS MICROCONTROLLER USER'S MANUAL Revision 1.3"
+ */
+#define S3C2440_MPLL_400MHZ     ((0x5c << 12) | (0x01 << 4) | (0x01))
+#define S3C2440_UPLL_48MHZ      ((0x38 << 12) | (0x02 << 4) | (0x02))
+/* FCLK:HCLK:PCLK=1:4:8 */
+#define S3C2440_CLKDIV          (0x5)        
+
+#define S3C2410_MPLL_200MHZ     ((0x5c << 12) | (0x04 << 4) | (0x00))
+#define S3C2410_UPLL_48MHZ      ((0x28 << 12) | (0x01 << 4) | (0x02))
+/* FCLK:HCLK:PCLK=1:2:4 */
+#define S3C2410_CLKDIV          (0x3)
+
 static inline void delay (unsigned long loops)
 {
 	__asm__ volatile ("1:\n"
@@ -69,21 +85,6 @@ int board_init (void)
 {
 	S3C24X0_CLOCK_POWER * const clk_power = S3C24X0_GetBase_CLOCK_POWER();
 	S3C24X0_GPIO * const gpio = S3C24X0_GetBase_GPIO();
-
-	/* to reduce PLL lock time, adjust the LOCKTIME register */
-	clk_power->LOCKTIME = 0xFFFFFF;
-
-	/* configure MPLL */
-	clk_power->MPLLCON = ((M_MDIV << 12) + (M_PDIV << 4) + M_SDIV);
-
-	/* some delay between MPLL and UPLL */
-	delay (4000);
-
-	/* configure UPLL */
-	clk_power->UPLLCON = ((U_M_MDIV << 12) + (U_M_PDIV << 4) + U_M_SDIV);
-
-	/* some delay between MPLL and UPLL */
-	delay (8000);
 
 	/* set up the I/O ports */
 	gpio->GPACON = 0x007FFFFF;
@@ -101,9 +102,72 @@ int board_init (void)
 	gpio->GPGUP = 0x0000FFFF;
 	gpio->GPHCON = 0x002AFAAA;
 	gpio->GPHUP = 0x000007FF;
+    
+    /**
+     * GSTATUS1: Chip ID
+     * s3c2410: 0x32410000, 0x32410002
+     * s3c2440: s3c2440a:0x32440001
+     */
+    if ((gpio->GSTATUS1 == 0x32410000) || (gpio->GSTATUS1 == 0x32410002))
+    {
+        clk_power->CLKDIVN = S3C2410_CLKDIV;
+        
+        /**
+         * HDIVN is not 0. Change to the asynchronous bus mode.
+         */
+        __asm__("mrc p15, 0, r1, c1, c0, 0\n"       /* Read p15 register1(Control register) to r1. */
+                "orr r1, r1, #0xc0000000\n"         /* 0xc0000000, Set to asynchronous bus mode. */
+                "mcr p15, 0, r1, c1, c0, 0\n"       /* Write r1 to p15 register1(Control register). */
+                :::"r1");                           /* Notify to gcc r1 value changed. */
 
-	/* arch number of SMDK2410-Board */
-	gd->bd->bi_arch_number = MACH_TYPE_SMDK2410;
+        /* to reduce PLL lock time, adjust the LOCKTIME register */
+        clk_power->LOCKTIME = 0xFFFFFF;
+
+        /* configure MPLL */
+        clk_power->MPLLCON = S3C2410_MPLL_200MHZ;
+
+        /* some delay between MPLL and UPLL */
+        delay (4000);
+
+        /* configure UPLL */
+        clk_power->UPLLCON = S3C2410_UPLL_48MHZ;
+
+        /* some delay between MPLL and UPLL */
+        delay (8000);
+
+        /* arch number of SMDK2410-Board */
+        gd->bd->bi_arch_number = MACH_TYPE_SMDK2410;
+    }
+    else
+    {
+        clk_power->CLKDIVN = S3C2440_CLKDIV;
+        
+        /**
+         * HDIVN is not 0. Change to the asynchronous bus mode.
+         */
+        __asm__("mrc p15, 0, r1, c1, c0, 0\n"       /* Read p15 register1(Control register) to r1. */
+                "orr r1, r1, #0xc0000000\n"         /* 0xc0000000, Set to asynchronous bus mode. */
+                "mcr p15, 0, r1, c1, c0, 0\n"       /* Write r1 to p15 register1(Control register). */
+                :::"r1");                           /* Notify to gcc r1 value changed. */
+
+        /* to reduce PLL lock time, adjust the LOCKTIME register */
+        clk_power->LOCKTIME = 0xFFFFFF;
+
+        /* configure MPLL */
+        clk_power->MPLLCON = S3C2440_MPLL_400MHZ;
+
+        /* some delay between MPLL and UPLL */
+        delay (4000);
+
+        /* configure UPLL */
+        clk_power->UPLLCON = S3C2440_UPLL_48MHZ;
+
+        /* some delay between MPLL and UPLL */
+        delay (8000);
+
+        /* arch number of SMDK2410-Board */
+        gd->bd->bi_arch_number = MACH_TYPE_S3C2440;
+    }
 
 	/* adress of boot parameters */
 	gd->bd->bi_boot_params = 0x30000100;
