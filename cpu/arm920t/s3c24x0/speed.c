@@ -41,6 +41,22 @@
 #define MPLL 0
 #define UPLL 1
 
+#define S3C2440_CLKDIVN_PDIVN        (0x01)
+#define S3C2440_CLKDIVN_HDIVN_MASK   (0x03 << 1)
+#define S3C2440_CLKDIVN_HDIVN_1      (0x00 << 1)
+#define S3C2440_CLKDIVN_HDIVN_2      (0x01 << 1)
+#define S3C2440_CLKDIVN_HDIVN_4_8    (0x02 << 1)
+#define S3C2440_CLKDIVN_HDIVN_3_6    (0x03 << 1)
+#define S3C2440_CLKDIVN_UCLK         (0x01 << 3)
+
+#define S3C2440_CAMDIVN_CAMCLK_MASK  (0x0f)
+#define S3C2440_CAMDIVN_CAMCLK_SEL   (0x01 << 4)
+#define S3C2440_CAMDIVN_HCLK3_HALF   (0x01 << 8)
+#define S3C2440_CAMDIVN_HCLK4_HALF   (0x01 << 9)
+#define S3C2440_CAMDIVN_DVSEN        (0x01 << 12)
+
+DECLARE_GLOBAL_DATA_PTR;
+
 /* ------------------------------------------------------------------------- */
 /* NOTE: This describes the proper use of this file.
  *
@@ -57,17 +73,28 @@ static ulong get_PLLCLK(int pllreg)
     ulong r, m, p, s;
 
     if (pllreg == MPLL)
-	r = clk_power->MPLLCON;
+        r = clk_power->MPLLCON;
     else if (pllreg == UPLL)
-	r = clk_power->UPLLCON;
+        r = clk_power->UPLLCON;
     else
-	hang();
+        hang();
 
     m = ((r & 0xFF000) >> 12) + 8;
     p = ((r & 0x003F0) >> 4) + 2;
     s = r & 0x3;
 
-    return((CONFIG_SYS_CLK_FREQ * m) / (p << s));
+    /**
+     * s3c2410
+     * s3c2440
+     */
+    if (gd->bd->bi_arch_number == MACH_TYPE_SMDK2410)
+    {
+        return((CONFIG_SYS_CLK_FREQ * m) / (p << s));
+    }
+    else
+    {
+        return((CONFIG_SYS_CLK_FREQ * m * 2) / (p << s));
+    }
 }
 
 /* return FCLK frequency */
@@ -80,8 +107,41 @@ ulong get_FCLK(void)
 ulong get_HCLK(void)
 {
     S3C24X0_CLOCK_POWER * const clk_power = S3C24X0_GetBase_CLOCK_POWER();
+    ulong clkdiv;
+    ulong camdiv;
+    int hdiv = 1;
 
-    return((clk_power->CLKDIVN & 0x2) ? get_FCLK()/2 : get_FCLK());
+    /**
+     * s3c2410
+     * s3c2440
+     */
+    if (gd->bd->bi_arch_number == MACH_TYPE_SMDK2410)
+    {
+        return((clk_power->CLKDIVN & 0x2) ? get_FCLK()/2 : get_FCLK());
+    }
+    else
+    {
+        clkdiv = clk_power->CLKDIVN;
+        camdiv = clk_power->CAMDIVN;
+
+        switch (clkdiv & S3C2440_CLKDIVN_HDIVN_MASK)
+        {
+        case S3C2440_CLKDIVN_HDIVN_1:
+            hdiv = 1;
+            break;
+        case S3C2440_CLKDIVN_HDIVN_2:
+            hdiv = 2;
+            break;
+        case S3C2440_CLKDIVN_HDIVN_4_8:
+            hdiv = (camdiv & S3C2440_CAMDIVN_HCLK4_HALF) ? 8 : 4;
+            break;
+        case S3C2440_CLKDIVN_HDIVN_3_6:
+            hdiv = (camdiv & S3C2440_CAMDIVN_HCLK3_HALF) ? 6 : 3;
+            break;
+        }
+    }
+
+    return get_FCLK() / hdiv;
 }
 
 /* return PCLK frequency */
