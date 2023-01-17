@@ -25,7 +25,8 @@ include $(TOPDIR)/config.mk
 
 LIB	= $(obj)lib$(BOARD).a
 
-COBJS	:= pxysmdk2440.o flash.o
+# COBJS	:= pxysmdk2440.o flash.o
+COBJS	:= pxysmdk2440.o
 SOBJS	:= lowlevel_init.o
 
 SRCS	:= $(SOBJS:.o=.S) $(COBJS:.o=.c)

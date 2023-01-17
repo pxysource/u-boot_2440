@@ -566,6 +566,8 @@ int console_init_r (void)
 		return (0);
 #endif
 
+    puts("[pxysmdk2440] console_init_r(). \n");
+
 	return (0);
 }
 

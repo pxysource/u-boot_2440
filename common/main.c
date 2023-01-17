@@ -26,6 +26,7 @@
  */
 
 /* #define	DEBUG	*/
+#define	DEBUG
 
 #include <common.h>
 #include <watchdog.h>
@@ -294,6 +295,8 @@ static __inline__ int abortboot(int bootdelay)
 
 void main_loop (void)
 {
+    printf("[pxysmdk2440] main_loop.\n");
+
 #ifndef CFG_HUSH_PARSER
 	static char lastcommand[CFG_CBSIZE] = { 0, };
 	int len;

@@ -53,9 +53,15 @@
 /*
  * Hardware drivers
  */
-#define CONFIG_DRIVER_CS8900	1	/* we have a CS8900 on-board */
-#define CS8900_BASE		0x19000300
-#define CS8900_BUS16		1 /* the Linux driver does accesses as shorts */
+// #define CONFIG_DRIVER_CS8900	1	[> we have a CS8900 on-board <]
+// #define CS8900_BASE		0x19000300
+// #define CS8900_BUS16		1 [> the Linux driver does accesses as shorts <]
+
+#define CONFIG_DRIVER_DM9000    1
+#define CONFIG_DM9000_USE_16BIT 1
+#define CONFIG_DM9000_BASE      0x20000000
+#define DM9000_IO               (CONFIG_DM9000_BASE)
+#define DM9000_DATA             (CONFIG_DM9000_BASE + 4)
 
 /*
  * select serial console configuration
@@ -91,10 +97,10 @@
 
 #define CONFIG_BOOTDELAY	3
 /*#define CONFIG_BOOTARGS    	"root=ramfs devfs=mount console=ttySA0,9600" */
-/*#define CONFIG_ETHADDR	08:00:3e:26:0a:5b */
-#define CONFIG_NETMASK          255.255.255.0
-#define CONFIG_IPADDR		10.0.0.110
-#define CONFIG_SERVERIP		10.0.0.1
+#define CONFIG_ETHADDR	    08:00:3e:26:0a:5b
+#define CONFIG_NETMASK      255.255.255.0
+#define CONFIG_IPADDR		192.168.1.110
+#define CONFIG_SERVERIP		192.168.1.2
 /*#define CONFIG_BOOTFILE	"elinos-lart" */
 /*#define CONFIG_BOOTCOMMAND	"tftp; bootm" */
 
@@ -149,12 +155,13 @@
 #define PHYS_FLASH_1		0x00000000 /* Flash Bank #1 */
 
 #define CFG_FLASH_BASE		PHYS_FLASH_1
+#define CFG_MONITOR_BASE		PHYS_FLASH_1
 
 /*-----------------------------------------------------------------------
  * FLASH and environment organization
  */
 
-#define CONFIG_AMD_LV400	1	/* uncomment this if you have a LV400 flash */
+//#define CONFIG_AMD_LV400	1	/* uncomment this if you have a LV400 flash */
 #if 0
 #define CONFIG_AMD_LV800	1	/* uncomment this if you have a LV800 flash */
 #endif
@@ -171,11 +178,20 @@
 #define CFG_ENV_ADDR		(CFG_FLASH_BASE + 0x070000) /* addr of environment */
 #endif
 
+#define CFG_FLASH_CFI 1
+#define CFG_FLASH_CFI_DRIVER 1
+#define CFG_MAX_FLASH_SECT	(512)	/* max number of sectors on one chip */
+#ifdef CFG_FLASH_CFI_DRIVER
+#define CFG_FLASH_USE_BUFFER_WRITE 1
+#define CFG_FLASH_CFI_WIDTH (FLASH_CFI_16BIT)
+#endif
+
 /* timeout values are in ticks */
 #define CFG_FLASH_ERASE_TOUT	(5*CFG_HZ) /* Timeout for Flash Erase */
 #define CFG_FLASH_WRITE_TOUT	(5*CFG_HZ) /* Timeout for Flash Write */
 
 #define	CFG_ENV_IS_IN_FLASH	1
-#define CFG_ENV_SIZE		0x10000	/* Total Size of Environment Sector */
+#define CFG_ENV_OFFSET		0x40000	/*  */
+#define CFG_ENV_SIZE		0x20000	/* Total Size of Environment Sector */
 
 #endif	/* __CONFIG_H */
