@@ -113,12 +113,12 @@
 /*
  * Miscellaneous configurable options
  */
-#define	CFG_LONGHELP				/* undef to save memory		*/
-#define	CFG_PROMPT		"SMDK2410 # "	/* Monitor Command Prompt	*/
-#define	CFG_CBSIZE		256		/* Console I/O Buffer Size	*/
-#define	CFG_PBSIZE (CFG_CBSIZE+sizeof(CFG_PROMPT)+16) /* Print Buffer Size */
-#define	CFG_MAXARGS		16		/* max number of command args	*/
-#define CFG_BARGSIZE		CFG_CBSIZE	/* Boot Argument Buffer Size	*/
+#define CFG_LONGHELP                    /* undef to save memory		*/
+#define CFG_PROMPT      "pxy-uboot> "   /* Monitor Command Prompt	*/
+#define CFG_CBSIZE      256             /* Console I/O Buffer Size	*/
+#define CFG_PBSIZE      (CFG_CBSIZE+sizeof(CFG_PROMPT)+16) /* Print Buffer Size */
+#define CFG_MAXARGS     16              /* max number of command args	*/
+#define CFG_BARGSIZE    CFG_CBSIZE      /* Boot Argument Buffer Size	*/
 
 #define CFG_MEMTEST_START	0x30000000	/* memtest works on	*/
 #define CFG_MEMTEST_END		0x33F00000	/* 63 MB in DRAM	*/
